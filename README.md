@@ -1,12 +1,11 @@
 # Bankakas Assignment
 
 I complete the assignment for the mobile development job. 
-
 As the requirement describes it dynamically creates the UI using the API data. 
-So I created a function named **CreateLayoutFromJSON** which calls the API using Volley, then the Data is structured into arrays and objects accordingly from the API. Then for loop checks whether the UI is drop-down or text field and created Edit text or Spinner accordingly. 
-When the function creates the EditText it also checks if the Input type is string or int?  After it creates the EditText, they are inserted into an ArrayList so that EditText can be selected while validation and also some values like hint text and regex are also stored in ArrayList. 
+So I created a function named **CreateLayoutFromJSON** which calls the API using Volley, then the Data is structured into arrays and objects accordingly from the API. Then for loop checks whether the UI is drop-down or text field and creates Edit text or Spinner accordingly. 
+When the function creates the EditText it also checks if the Input type is string or int?  After it creates the EditText, they are inserted into an ArrayList so that EditText can be selected while validation, and also some values like hint text and regex are also stored in ArrayList. 
 Similarly, the Spinner data is also generated using a for loop where the month’s data are stored in an array which is used to display the data into the Spinner.
-I also complete the assignment validation for task 1, task 2, task 3. For the validation of email was not working because the regex provided from the Api was missing a bracket so i have done 3 sloution ways to do email and phone validation.
+I also complete the assignment validation for task 1, task 2, task 3. The validation of email was not working because the regex provided from the API was missing a bracket so I have done 3 solution ways to do email and phone validation.
 
 ```
  //Solution 1
@@ -61,3 +60,4 @@ else if (!Patterns.PHONE.matcher(customer_phone_string).matches()) {
 }
 
 ```
+The most fruitful and effective way was solution 3 which is used in the application. 
