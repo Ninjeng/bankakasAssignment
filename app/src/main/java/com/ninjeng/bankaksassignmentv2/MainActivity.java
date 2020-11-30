@@ -2,8 +2,10 @@ package com.ninjeng.bankaksassignmentv2;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.InputType;
+import android.text.PrecomputedText;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.Gravity;
@@ -37,13 +39,15 @@ public class MainActivity extends AppCompatActivity {
     private Spinner spinner;
     private RequestQueue mQueue;
     List<EditText> editTextList;
-
+    LinearLayout linearLayout;
+    List<String> hints= null;
+    ArrayList<String>  regex= null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         spinner = findViewById(R.id.Spinner);
-
+        linearLayout = findViewById(R.id.linearList);
         mQueue = Volley.newRequestQueue(this);
         ArrayList<String> arrayList = new ArrayList<>();
         arrayList.add("Task 1");
@@ -57,7 +61,6 @@ public class MainActivity extends AppCompatActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String[] type = spinner.getSelectedItem().toString().split(" ");
                 CreateLayoutFromJSON(type[1]);
-//                Log.d("type", type[1]);
             }
 
             @Override
@@ -69,7 +72,6 @@ public class MainActivity extends AppCompatActivity {
     private void CreateLayoutFromJSON(final String type)
     {
         editTextList = new ArrayList<>();
-        final LinearLayout linearLayout = findViewById(R.id.linearList);
         if((linearLayout).getChildCount() > 0)
             (linearLayout).removeAllViews();
         final String base_url = "https://api-staging.bankaks.com/task/"+type;
@@ -81,11 +83,18 @@ public class MainActivity extends AppCompatActivity {
                     TextView textView = new TextView(MainActivity.this);
                     textView.setText(jsonObject.getString("screen_title"));
                     textView.setTextSize(20f);
+                    textView.setTypeface(null, Typeface.BOLD);
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                    );
+                    params.setMargins(0, 10, 0, 5);
+                    textView.setLayoutParams(params);
                     linearLayout.addView(textView);
                     final int noOfTextFields =jsonObject.getInt("number_of_fields");
                     final JSONArray fields  =jsonObject.getJSONArray("fields");
-                    final List<String> hints = new ArrayList<>();
-                    final ArrayList<String>  regex= new ArrayList<>();
+                    hints = new ArrayList<>();
+                    regex = new ArrayList<>();
                     editTextList.clear();
 
                     for (int i = 0;i < noOfTextFields; i++)
@@ -95,48 +104,17 @@ public class MainActivity extends AppCompatActivity {
                         JSONObject data_type = field.getJSONObject("type");
                         if(ui_type.getString("type").equals("textfield"))
                         {
-                            EditText editText = new EditText(MainActivity.this);
-                            editText.setHint(field.getString("placeholder"));
-                            if(data_type.getString("data_type").equals("string"))
-                            {
-                                editText.setInputType(InputType.TYPE_CLASS_TEXT);
-                            }
-                            else if (data_type.getString("data_type").equals("int"))
-                            {
-                                editText.setInputType(InputType.TYPE_CLASS_NUMBER);
-                            }
-                            editText.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-                            editText.setId(i);
-                            editText.setBackgroundResource(R.drawable.input_design);
-
-                            editTextList.add(editText);
-                            hints.add(field.getString("hint_text"));
-                            regex.add(field.getString("regex"));
-                            linearLayout.addView(editText);
+                            createEditText(field,data_type,i);
 
                         }
                         else if(ui_type.getString("type").equals("dropdown"))
                         {
-                            Spinner spinner = new Spinner(MainActivity.this);
-                            spinner.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-                            JSONArray values = ui_type.getJSONArray("values");
-                            List<String> arr = new ArrayList<>();
-                            for(int v = 0; v<values.length();v++)
-                            {
-                                JSONObject months = values.getJSONObject(v);
-                                arr.add(months.getString("name"));
-                            }
-                            ArrayAdapter<String> arrAdapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_spinner_item, arr);
-                            spinner.setAdapter(arrAdapter);
-                            spinner.setId(i);
-                            linearLayout.addView(spinner);
+                            createSpinner(ui_type,field,i);
 
                         }
 
                     }
-                    Button btnCalc = new Button(MainActivity.this);
-                    btnCalc.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-                    btnCalc.setText(getString(R.string.btn_string));
+                    Button btnCalc = createButton();
                     btnCalc.setGravity(Gravity.CENTER_HORIZONTAL);
                     btnCalc.setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -154,14 +132,61 @@ public class MainActivity extends AppCompatActivity {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-
+                Toast.makeText(MainActivity.this, error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
 
         mQueue.add(request);
     }
+    private Button createButton()
+    {
+        Button btn = new Button(MainActivity.this);
+        btn.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        btn.setText(getString(R.string.btn_string));
+        return btn;
+    }
 
-    public void validation(String type, List<String> hints,List<String> regex){
+    private void createEditText(JSONObject field,JSONObject data_type, int i ) throws JSONException {
+        EditText editText = new EditText(MainActivity.this);
+        editText.setHint(field.getString("placeholder"));
+        if(data_type.getString("data_type").equals("string"))
+        {
+            editText.setInputType(InputType.TYPE_CLASS_TEXT);
+        }
+        else if (data_type.getString("data_type").equals("int"))
+        {
+            editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+        }
+        editText.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        editText.setId(i);
+        editText.setBackgroundResource(R.drawable.input_design);
+
+        editTextList.add(editText);
+        hints.add(field.getString("hint_text"));
+        regex.add(field.getString("regex"));
+        linearLayout.addView(editText);
+    }
+    private void createSpinner(JSONObject ui_type,JSONObject field,int i) throws JSONException {
+
+        TextView textView2 = new TextView(MainActivity.this);
+        textView2.setTextSize(14);
+        textView2.setText(field.getString("placeholder"));
+        Spinner spinner = new Spinner(MainActivity.this);
+        spinner.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 100));
+        JSONArray values = ui_type.getJSONArray("values");
+        List<String> arr = new ArrayList<>();
+        for(int v = 0; v<values.length();v++)
+        {
+            JSONObject months = values.getJSONObject(v);
+            arr.add(months.getString("name"));
+        }
+        ArrayAdapter<String> arrAdapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_spinner_item, arr);
+        spinner.setAdapter(arrAdapter);
+        spinner.setId(i);
+        linearLayout.addView(textView2);
+        linearLayout.addView(spinner);
+    }
+    private void validation(String type, List<String> hints,List<String> regex){
         switch (type) {
             case "1": {
                 EditText sc_no = editTextList.get(0);
@@ -172,11 +197,11 @@ public class MainActivity extends AppCompatActivity {
                 if (sc_no_string.length() == 0 || sc_no_string.length()<7) {
                     sc_no.requestFocus();
                     sc_no.setError(hints.get(0));
-                } else if (customer_id_string.length() == 0|| sc_no_string.length()<5) {
+                } else if (customer_id_string.length() == 0 || customer_id_string.length()<5) {
                     customer_id.requestFocus();
                     customer_id.setError(hints.get(1));
                 } else {
-                    Toast.makeText(this, "Success", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.strSuccess), Toast.LENGTH_LONG).show();
                 }
                 break;
             }
@@ -188,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
                     customer_id.requestFocus();
                     customer_id.setError(hints.get(0));
                 } else {
-                    Toast.makeText(this, "Success", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.strSuccess), Toast.LENGTH_LONG).show();
                 }
                 break;
             }
@@ -257,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
                     name.requestFocus();
                     name.setError("eg("+hints.get(2)+")");
                 } else {
-                    Toast.makeText(this, "Success", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getString(R.string.strSuccess), Toast.LENGTH_LONG).show();
                 }
                 break;
             default:
